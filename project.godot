@@ -1,0 +1,29 @@
+; Escrow Invaders — Bullet Heaven training build
+config_version=5
+
+[application]
+config/name="Escrow Invaders"
+config/version="0.9.0"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+config/description="An endless learning arcade with permanent ship progression and answer-powered combat."
+
+[display]
+window/size/viewport_width=1440
+window/size/viewport_height=900
+window/size/window_width_override=1280
+window/size/window_height_override=800
+window/stretch/mode="disabled"
+window/stretch/aspect="expand"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+environment/defaults/default_clear_color=Color(0.0235, 0.0392, 0.0863, 1)
+
+[audio]
+driver/enable_input=false
+
+[debug]
+gdscript/warnings/inference_on_variant=0

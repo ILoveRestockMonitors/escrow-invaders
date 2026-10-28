@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+		<title>$GODOT_PROJECT_NAME</title>
+		<style>
+html, body, #canvas {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+body {
+	color: white;
+	background-color: black;
+	overflow: hidden;
+	touch-action: auto;
+}
+
+#canvas {
+	display: block;
+}
+
+#canvas:focus {
+	outline: none;
+}
+
+#status, #status-splash, #status-progress {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
+
+#status, #status-splash {
+	top: 0;
+	bottom: 0;
+}
+
+#status {
+	background-color: $GODOT_SPLASH_COLOR;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	visibility: hidden;
+}
+
+#status-splash {
+	max-height: 100%;
+	max-width: 100%;
+	margin: auto;
+}
+
+#status-splash.show-image--false {
+	display: none;
+}
+
+#status-splash.fullsize--true {
+	height: 100%;
+	width: 100%;
+	object-fit: contain;
+}
+
+#status-splash.use-filter--false {
+	image-rendering: pixelated;
+}
+
+#status-progress, #status-notice {
+	display: none;
+}
+
+#status-progress {
+	bottom: 10%;
+	width: 50%;
+	margin: 0 auto;
+}
+
+#status-notice {
+	background-color: #5b3943;
+	border-radius: 0.5rem;
+	border: 1px solid #9b3943;
+	color: #e0e0e0;
+	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
+	line-height: 1.3;
+	margin: 0 2rem;
+	overflow: hidden;
+	padding: 1rem;
+	text-align: center;
+	z-index: 1;
+}
+		</style>
+		$GODOT_HEAD_INCLUDE
+	<meta name="theme-color" content="#080e1d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Escrow Invaders">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="index.180x180.png">
+<style>
+html,body {width:100%;height:100%;background:#080e1d;overscroll-behavior:none;}
+#game-frame {position:fixed;inset:env(safe-area-inset-top) env(safe-area-inset-right) auto env(safe-area-inset-left);height:calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom));height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));}
+#canvas {width:100%;height:100%;touch-action:none;}
+#status {background:radial-gradient(ellipse at 65% 30%,#17384b 0%,#091825 40%,#060e19 75%);font:16px system-ui,sans-serif;}
+#status-splash {display:none;}
+#status::before {content:'ESCROW INVADERS';color:#64eee3;font:bold clamp(20px,5vw,32px) system-ui,sans-serif;letter-spacing:3px;}
+#status::after {content:'Preparing your next flight…';margin-top:16px;color:#a3bace;font-size:14px;letter-spacing:1px;}
+#status-progress {appearance:none;height:4px;border:0;border-radius:4px;overflow:hidden;accent-color:#bafa83;max-width:320px;}
+#status-progress::-webkit-progress-bar {background:#203746;}
+#status-progress::-webkit-progress-value {background:linear-gradient(90deg,#64eee3,#bafa83);}
+#install {box-sizing:border-box;width:min(92vw,430px);max-height:85dvh;overflow:auto;background:#101c31;color:#edf7ff;border:1px solid #53e8ff;border-radius:22px;padding:24px;font:17px/1.5 system-ui,sans-serif;touch-action:pan-y;}
+#install::backdrop {background:#080e1ddb;}
+#install h2 {font-size:25px;margin:0 0 12px;color:#bfff68;}
+#install ol {padding-left:24px;} #install li {margin:12px 0;}
+#install button {width:100%;min-height:48px;border:0;border-radius:10px;background:#bfff68;color:#080e1d;font:bold 17px system-ui;margin-top:12px;}
+#install p {color:#9eb5ce;}
+</style>
+<!--ORBITAL_CSS-->
+</head>
+	<body>
+		<div id="game-frame"><canvas id="canvas">
+			Your browser does not support the canvas tag.
+		</canvas></div>
+
+		<dialog id="install" aria-labelledby="install-title">
+<h2 id="install-title">Your pocket arsenal.</h2>
+<ol id="install-steps"><li>Open this game in <strong>Safari</strong> on your iPhone.</li><li>Tap <strong>Share</strong> (the square with an arrow), then <strong>Add to Home Screen</strong>. Share may be inside the ••• menu.</li><li>Keep <strong>Open as Web App</strong> on if shown, then tap <strong>Add</strong>.</li></ol>
+<p>Keep Tailscale connected to reach your home lab. Your ship and learning progress sync through the home lab, so every device continues the same game.</p>
+<button id="install-close" aria-keyshortcuts="Enter Escape">GOT IT <span aria-hidden="true">[ENTER / ESC]</span></button></dialog>
+<script>
+const installDialog = document.getElementById('install');
+window.escrowInstall = () => {
+ if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
+  document.getElementById('install-steps').innerHTML = '<li>You’re already playing the home-screen app. Your arsenal is ready.</li>';
+ }
+ installDialog.showModal();
+ document.getElementById('install-close').focus();
+};
+document.getElementById('install-close').onclick = () => {installDialog.close(); document.getElementById('canvas').focus();};
+installDialog.addEventListener('keydown',event=>{
+ if(['Enter','Escape'].includes(event.key)){event.preventDefault();event.stopPropagation();if(!event.repeat)document.getElementById('install-close').click();}
+});
+// Use CSS pixels rather than multiplying UI dimensions by Retina pixel density.
+// This also limits the mobile GPU workload and follows Safari toolbar/keyboard resizing.
+const frame = document.getElementById('game-frame');
+const gameCanvas = document.getElementById('canvas');
+function sizeGame() {
+ const rect=frame.getBoundingClientRect();
+ const w=Math.max(1,Math.round(rect.width)), h=Math.max(1,Math.round(rect.height));
+ if(gameCanvas.width!==w) gameCanvas.width=w;
+ if(gameCanvas.height!==h) gameCanvas.height=h;
+}
+new ResizeObserver(sizeGame).observe(frame);
+window.addEventListener('resize',sizeGame);
+sizeGame();
+// Shared home-lab save. The game polls next() for "kind\nbody" messages.
+window.escrowSync = (() => {
+ const queue = [];
+ let initialText = '', initialTaken = false, lastCheck = 0;
+ const request = (options = {}) => fetch('/api/save', {cache: 'no-store', ...options, signal: AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined});
+ const failure = error => queue.push((error && error.status ? 'error\n' + error.status : 'offline\n'));
+ function check(first) {
+  lastCheck = Date.now();
+  request().then(response => response.ok ? response.text() : Promise.reject(response)).then(text => {
+   if (first && !initialTaken) initialText = text; else queue.push('remote\n' + text);
+  }).catch(failure);
+ }
+ const refresh = () => { if (document.visibilityState === 'visible' && Date.now() - lastCheck > 3000) check(false); };
+ document.addEventListener('visibilitychange', refresh);
+ window.addEventListener('focus', refresh);
+ window.addEventListener('online', refresh);
+ setInterval(refresh, 60000);
+ check(true);
+ return {
+  initial() { initialTaken = true; return initialText; },
+  next() { return queue.shift() || ''; },
+  push(body) {
+   request({method: 'PUT', headers: {'Content-Type': 'application/json'}, body}).then(async response => {
+    const text = await response.text();
+    if (response.ok) queue.push('pushed\n' + text);
+    else if (response.status === 409) queue.push('conflict\n' + text);
+    else queue.push('error\n' + response.status);
+   }).catch(failure);
+  },
+ };
+})();
+</script>
+<noscript>
+			Your browser does not support JavaScript.
+		</noscript>
+
+		<div id="status">
+			<img id="status-splash" class="$GODOT_SPLASH_CLASSES" src="$GODOT_SPLASH" alt="">
+			<progress id="status-progress"></progress>
+			<div id="status-notice"></div>
+		</div>
+
+		<!--ORBITAL_JS-->
+		<script src="$GODOT_URL"></script>
+		<script>
+const GODOT_CONFIG = $GODOT_CONFIG;
+// Development previews use network assets; live releases retain safe PWA updates.
+if (['127.0.0.1','localhost'].includes(location.hostname) && new URLSearchParams(location.search).has('preview')) GODOT_CONFIG.serviceWorker='';
+// Recovery uses current online assets on this same origin and the same Godot save.
+if (location.pathname.startsWith('/latest/')) GODOT_CONFIG.serviceWorker='';
+const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const statusOverlay = document.getElementById('status');
+	const statusProgress = document.getElementById('status-progress');
+	const statusNotice = document.getElementById('status-notice');
+
+	let initializing = true;
+	let statusMode = '';
+
+	function setStatusMode(mode) {
+		if (statusMode === mode || !initializing) {
+			return;
+		}
+		if (mode === 'hidden') {
+			statusOverlay.remove();
+			initializing = false;
+			return;
+		}
+		statusOverlay.style.visibility = 'visible';
+		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
+		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+		statusMode = mode;
+	}
+
+	function setStatusNotice(text) {
+		while (statusNotice.lastChild) {
+			statusNotice.removeChild(statusNotice.lastChild);
+		}
+		const lines = text.split('\n');
+		lines.forEach((line) => {
+			statusNotice.appendChild(document.createTextNode(line));
+			statusNotice.appendChild(document.createElement('br'));
+		});
+	}
+
+	function displayFailureNotice(err) {
+		console.error(err);
+		if (err instanceof Error) {
+			setStatusNotice(err.message);
+		} else if (typeof err === 'string') {
+			setStatusNotice(err);
+		} else {
+			setStatusNotice('An unknown error occurred.');
+		}
+		setStatusMode('notice');
+		initializing = false;
+	}
+
+	const missing = Engine.getMissingFeatures({
+		threads: GODOT_THREADS_ENABLED,
+	});
+
+	if (missing.length !== 0) {
+		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
+			let serviceWorkerRegistrationPromise;
+			try {
+				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+			} catch (err) {
+				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+			}
+			// There's a chance that installing the service worker would fix the issue
+			Promise.race([
+				serviceWorkerRegistrationPromise.then((registration) => {
+					if (registration != null) {
+						return Promise.reject(new Error('Service worker already exists.'));
+					}
+					return registration;
+				}).then(() => engine.installServiceWorker()),
+				// For some reason, `getRegistration()` can stall
+				new Promise((resolve) => {
+					setTimeout(() => resolve(), 2000);
+				}),
+			]).then(() => {
+				// Reload if there was no error.
+				window.location.reload();
+			}).catch((err) => {
+				console.error('Error while registering service worker:', err);
+			});
+		} else {
+			// Display the message as usual
+			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
+			displayFailureNotice(missingMsg + missing.join('\n'));
+		}
+	} else {
+		setStatusMode('progress');
+		engine.startGame({
+			'onProgress': function (current, total) {
+				if (current > 0 && total > 0) {
+					statusProgress.value = current;
+					statusProgress.max = total;
+				} else {
+					statusProgress.removeAttribute('value');
+					statusProgress.removeAttribute('max');
+				}
+			},
+		}).then(() => {
+			setStatusMode('hidden');
+		}, displayFailureNotice);
+	}
+}());
+		</script>
+	</body>
+</html>
+

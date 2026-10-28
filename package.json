@@ -1,0 +1,11 @@
+{
+  "name": "escrow-invaders",
+  "version": "0.9.0",
+  "private": true,
+  "description": "Real-estate study arcade with an included ready-to-play browser build",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node tests/test_server.mjs && node tests/test_service_worker.mjs"
+  }
+}

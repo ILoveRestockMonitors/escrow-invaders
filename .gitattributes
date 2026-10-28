@@ -1,0 +1,7 @@
+* text=auto
+build/web/** -text
+*.png -text
+*.ttf -text
+*.gz -text
+*.wasm -text
+*.pck -text

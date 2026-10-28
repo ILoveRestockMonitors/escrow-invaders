@@ -1,0 +1,8 @@
+.godot/
+.runtime/
+.build-runtime/
+node_modules/
+*.tmp
+*.log
+.env
+.env.*
